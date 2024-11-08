@@ -1,0 +1,122 @@
+---
+title: "A04"
+output: pdf_document
+date: "2024-04-10"
+---
+# Definir el directorio
+```{r}
+directorio <- "C:/Users/Hiare/OneDrive/Escritorio/Universidad de los Andes/Analítica y Proyecciones para Macroeconomía y Finanzas/Ayudantías/A04"
+datos <- file.path(directorio, "/Datos")
+figuras <- file.path(directorio, "Figuras")
+tablas <- file.path(directorio, "Tablas")
+setwd(paste0(directorio))
+getwd()
+```
+# 1. Multicolinealidad y VIF utilizando la base de datos mtcars
+```{r}
+# 1) Ajuste un modelo de regresión utilizando la variable de respuesta mpg y las variables predictoras disp, hp, wt y drat.  ¿Qué conclusiones puedes sacar del resultado del modelo, considerando el valor de R cuadrado, el estadístico F y los valores p de las variables predictoras?
+
+mtcars <- read.csv("Datos/mtcars.csv")
+
+#Modelo de regresiób
+model <- lm(mpg ~ disp + hp + wt + drat, data = mtcars)
+
+#view the output of the regression model
+summary(model)
+
+# 2) Utilice la función vif() de la biblioteca de automóviles para calcular el VIF para cada variable predictora en el modelo. Interprete el significado del VIF y sus implicaciones en el análisis de regresión.
+library(car)
+
+# Calcular el VIF para nuestro modelo
+vif(model)
+
+# 3) Para visualizar los valores de VIF para cada variable predictora, cree un gráfico de barras horizontales y agregaremos una línea vertical en 5 para identificar claramente los valores de VIF que exceden este umbral.
+
+# Crear un vector con los  VIF values
+vif_values <- vif(model)
+
+# Creación de gráfico
+barplot(vif_values, main = "VIF Values", horiz = TRUE, col = "steelblue")
+
+#add vertical line at 5
+abline(v = 5, lwd = 3, lty = 2)
+
+# 4) Para comprender mejor por qué una variable predictora puede tener un valor VIF alto, cree una matriz de correlación para observar los coeficientes de correlación lineal entre cada par de variables. ¿Qué conclusiones puedes sacar sobre la relación entre las variables predictoras? ¿Por qué una variable predictora puede tener un valor VIF alto? ¿Cuál sería tu recomendación sobre cómo manejar esta situación en el modelo de regresión?
+
+# Definir las variables que incluiremos en la matriz:
+data <- mtcars[ , c("disp", "hp", "wt", "drat")]
+
+# Creación de la matriz
+cor(data)
+
+```
+
+# 2. Explorando los Rincones de Boston
+```{r}
+
+# 1) Divida aleatoriamente los datos en un conjunto de entrenamiento (80\% de los datos) para crear un modelo predictivo y un conjunto de prueba (20\% de los datos) para evaluar el modelo. Asegúrese de establecer la semilla para la reproducibilidad.
+
+library(tidyverse)
+library(caret)
+
+# Cargamos la base de datos:
+data("Boston", package = "MASS")
+
+# Dividimos la base
+set.seed(123) # Establece la semilla aleatoria para garantizar la reproducibilidad de los resultados. Esto significa que cada vez que ejecutemos este código, obtendremos la misma división de los datos en conjuntos de entrenamiento y prueba. El número 123 es la semilla aleatoria que se utiliza aquí.
+training.samples <- Boston$medv %>%
+  createDataPartition(p = 0.8, list = FALSE) # Esta línea crea un vector de índices que especifica las filas que se asignarán al conjunto de entrenamiento. 
+train.data  <- Boston[training.samples, ] # Esta línea crea el conjunto de datos de entrenamiento seleccionando las filas correspondientes a los índices generados anteriormente. 
+test.data <- Boston[-training.samples, ] # 
+
+
+
+
+# 2) Cree un modelo de regresión que incluya todas las variables predictoras del conjunto de datos de Boston, con $medv$ como variable dependiente.
+
+# Creación modelo
+model1 <- lm(medv ~., data = train.data)
+# Sacar las predicciones
+predictions <- model1 %>% predict(test.data)
+# Guardar en una data
+data.frame(
+  RMSE = RMSE(predictions, test.data$medv),
+  R2 = R2(predictions, test.data$medv)
+)
+
+# 3) Utilice la función vif() del paquete $car$ para detectar multicolinealidad en el modelo de regresión. En nuestro ejemplo, la puntuación VIF para la variable predictora es muy alta.
+
+car::vif(model1)
+
+# 4) Actualice nuestro modelo eliminando las variables predictoras con un valor VIF alto.
+
+# Contrucción del modelo excluyendo las variables 
+model2 <- lm(medv ~. -tax, data = train.data)
+# Hacer las predicciones
+predictions <- model2 %>% predict(test.data)
+# Model performance
+data.frame(
+  RMSE = RMSE(predictions, test.data$medv),
+  R2 = R2(predictions, test.data$medv)
+)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
